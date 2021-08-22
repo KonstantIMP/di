@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/di
+di.so
+di.dylib
+di.dll
+di.a
+di.lib
+di-test-*
+*.exe
+*.o
+*.obj
+*.lst

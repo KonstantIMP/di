@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"KonstantIMP"
+	],
+	"copyright": "Copyright © 2021, KonstantIMP",
+	"description": "An i18n library for D",
+	"license": "proprietary",
+	"name": "di"
+}
