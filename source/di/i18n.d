@@ -106,10 +106,8 @@ public static class I18n {
      *   I18nException if was found an incorrect locale file
      */
     public static void loadLocales (string path) {
-        import std.path : dirSeparator;
-
         foreach (DirEntry en; dirEntries (path, SpanMode.shallow)) {
-            if (en.isFile) loadLocale (path ~ dirSeparator ~ en.name);
+            if (en.isFile) loadLocale (en.name);
         }
     }
 
