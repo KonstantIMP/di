@@ -1,4 +1,4 @@
-import std.stdio;
+import std.stdio, di.i18n;
 
 void main()
 {
