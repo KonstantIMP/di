@@ -7,6 +7,10 @@ module di.i18n;
 
 import std.json, std.file, std.exception;
 
+///> Aliases for better use
+alias _  = I18n.get;
+alias _f = I18n.getFallback;
+
 /** 
  * An exception for I18n errors
  */
@@ -24,16 +28,11 @@ public class I18nException : Exception {
  * To load locale use JSON file with the struct :
  * { "name" : "locale`s name", "tr" : [{"id" : "id for the text", "tr" : "translation for the id"}, ...] }
  */
-private class Locale {
+private struct Locale {
     ///> Locale`s name (like 'en')
-    string name;
+    public string name = "";
     ///> Loaded translations for this locale
-    string [string] tr;
-
-    /** 
-     * Inits the locale (noname as default)
-     */
-    public this () { name = ""; }
+    public string [string] tr;
 }
 
 /** 
@@ -41,16 +40,27 @@ private class Locale {
  */
 public static class I18n {
     ///> List of the loaded locales
-    private static Locale [] loadedLocales;
+    private static Locale [string] loadedLocales;
     ///> Currently used locale
-    private static Locale currentLocale;
+    private static string currentLocale;
     
     /**
      * Inits the I18n module
      */
     public static this () {
-        loadedLocales = new Locale[0];
-        currentLocale = null;
+        import core.stdc.locale : setlocale, LC_ALL;
+        import std.conv : to;
+
+        currentLocale = "";
+        
+        foreach (f; ["i18n/", "po/", "locale/"]) {
+            try loadLocales(f);
+            catch (Exception) {}
+        }
+
+        string tmp = (to!string(setlocale(LC_ALL, "")))[0 .. 2];
+        if (tmp in loadedLocales) currentLocale = tmp;
+        else if (loadedLocales.keys.length) currentLocale = loadedLocales.keys[0];
     }
 
     /** 
@@ -78,12 +88,66 @@ public static class I18n {
 
         JSONValue lj = parseJSON (to!string(data));
 
-        Locale ll = new Locale(); ll.name = lj["name"].str();
+        Locale ll; ll.name = lj["name"].str();
 
         foreach (tr; lj["tr"].array) {
             ll.tr[tr["id"].str()] = tr["tr"].str();
         }
         
-        loadedLocales ~= ll;
+        loadedLocales[ll.name] = ll;
     }
+
+    /** 
+     * Loads all locales from the folder (non recursive)
+     * Params:
+     *   path = Path to the folder for loading
+     * Throws:
+     *   FileException if cannot read a file with the locale
+     *   I18nException if was found an incorrect locale file
+     */
+    public static void loadLocales (string path) {
+        import std.path : dirSeparator;
+
+        foreach (DirEntry en; dirEntries (path, SpanMode.shallow)) {
+            if (en.isFile) loadLocale (path ~ dirSeparator ~ en.name);
+        }
+    }
+
+    /** 
+     * Getter for the translation
+     * Params:
+     *   id = ID for the translation
+     *   locale = Locale for translation getting 
+     * Returns: Translation for the ID
+     * Throws: I18nException if cannot find locale or id
+     */
+    public static string get (string id, string locale = currentLocale) {
+        if (locale !in loadedLocales) throw new I18nException("Cannot find locale : " ~ locale);
+        if (id !in loadedLocales[locale].tr) throw new I18nException("Cannot find the id : " ~ id);
+        return loadedLocales[locale].tr[id];
+    }
+
+    /** 
+     * Getter for the translation
+     * Params:
+     *   id = ID for the translation
+     *   fallback = Translation if the error was catched
+     *   locale = Locale for translation getting 
+     * Returns: Translation for the ID or fallback
+     */
+    public static string getFallback (string id, string fallback, string locale = currentLocale) {
+        if (locale !in loadedLocales) return fallback;
+        if (id !in loadedLocales[locale].tr) return fallback;
+        return loadedLocales[locale].tr[id];
+    }
+
+    /** 
+     * Returns: List of the loaded locales
+     */
+    public static string [] getLoadedLocales () { return loadedLocales.keys; }
+
+    /** 
+     * Returns: Currently used locale
+     */
+    public static string getCurrentLocale () { return currentLocale; }
 }
