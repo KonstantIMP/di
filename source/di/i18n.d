@@ -53,7 +53,7 @@ public static class I18n {
 
         currentLocale = "";
         
-        foreach (f; ["i18n/", "po/", "locale/"]) {
+        foreach (f; ["./i18n/", "./po/", "./locale/"]) {
             try loadLocales(f);
             catch (Exception) {}
         }
@@ -72,21 +72,20 @@ public static class I18n {
      *   I18nException if was given incorrect locale file
      */
     public static void loadLocale (string path) {
-        loadLocale (cast(ubyte [])read (path));
+        import std.conv : to;
+        loadLocaleFromMemory (to!string(read (path)));
     }
 
     /** 
      * Loads locale from data
      * Params:
-     *   data = Array for loading
+     *   data = Data for loading
      * Throws:
      *   I18nException if was given incorrect locale file
      *   JSONException if was given incorrect locale file
      */
-    public static void loadLocale (ubyte [] data) {
-        import std.conv : to;
-
-        JSONValue lj = parseJSON (to!string(data));
+    public static void loadLocaleFromMemory (string data) {
+        JSONValue lj = parseJSON ((data));
 
         Locale ll; ll.name = lj["name"].str();
 
