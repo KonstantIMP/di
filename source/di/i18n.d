@@ -5,7 +5,7 @@
  */
 module di.i18n;
 
-import std.json, std.file, std.stdio, std.exception;
+import std.json, std.file, std.exception;
 
 /** 
  * An exception for I18n errors
@@ -21,6 +21,8 @@ public class I18nException : Exception {
 
 /** 
  * Struct for locale description
+ * To load locale use JSON file with the struct :
+ * { "name" : "locale`s name", "tr" : [{"id" : "id for the text", "tr" : "translation for the id"}, ...] }
  */
 private class Locale {
     ///> Locale`s name (like 'en')
@@ -49,5 +51,39 @@ public static class I18n {
     public static this () {
         loadedLocales = new Locale[0];
         currentLocale = null;
+    }
+
+    /** 
+     * Loads locale from JSON file
+     * Params:
+     *   path = Path to the JSON locale
+     * Throws:
+     *   FileException if the file doesn`t exsists
+     *   I18nException if was given incorrect locale file
+     */
+    public static void loadLocale (string path) {
+        loadLocale (cast(ubyte [])read (path));
+    }
+
+    /** 
+     * Loads locale from data
+     * Params:
+     *   data = Array for loading
+     * Throws:
+     *   I18nException if was given incorrect locale file
+     *   JSONException if was given incorrect locale file
+     */
+    public static void loadLocale (ubyte [] data) {
+        import std.conv : to;
+
+        JSONValue lj = parseJSON (to!string(data));
+
+        Locale ll = new Locale(); ll.name = lj["name"].str();
+
+        foreach (tr; lj["tr"].array) {
+            ll.tr[tr["id"].str()] = tr["tr"].str();
+        }
+        
+        loadedLocales ~= ll;
     }
 }
