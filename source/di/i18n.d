@@ -147,4 +147,11 @@ public static class I18n {
      * Returns: Currently used locale
      */
     public static string getCurrentLocale () { return currentLocale; }
+    
+    /** 
+     * Sets a new value for a current locale
+     * Params:
+     *   locale = New locale
+     */
+    public static void setCurrentLocale (string locale) { currentLocale = locale; }
 }
